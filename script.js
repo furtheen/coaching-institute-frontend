@@ -261,6 +261,7 @@ if (enrollForm && paymentModal) {
         method: "POST",
         body: JSON.stringify({
           enrollmentId,
+          amount: parseInt(priceDisplay.textContent.replace(/[^0-9]/g, "")),
         }),
       });
 
