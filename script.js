@@ -261,7 +261,6 @@ if (enrollForm && paymentModal) {
         method: "POST",
         body: JSON.stringify({
           enrollmentId,
-          amount: priceDisplayValue
         }),
       });
 
