@@ -103,6 +103,83 @@ async function apiRequest(path, options = {}) {
   return response.json();
 }
 
+function ensureRazorpayLoaded() {
+  if (window.Razorpay) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existingScript) {
+      existingScript.addEventListener("load", resolve, { once: true });
+      existingScript.addEventListener("error", () => reject(new Error("Failed to load Razorpay checkout script.")), {
+        once: true,
+      });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Razorpay checkout script."));
+    document.head.appendChild(script);
+  });
+}
+
+function openRazorpayCheckout({ order, enrollmentId, amount, name, email }) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      key: window.RAZORPAY_KEY_ID || "rzp_test_SfdZqi1Jjrx6VN",
+      amount: order.amount,
+      currency: order.currency || "INR",
+      name: "BitForge",
+      description: "Course Payment",
+      order_id: order.id,
+      prefill: {
+        name,
+        email,
+      },
+      notes: {
+        enrollmentId: String(enrollmentId),
+        amount: String(amount),
+      },
+      handler: async function (response) {
+        try {
+          await apiRequest("/api/payment/verify", {
+            method: "POST",
+            body: JSON.stringify({
+              enrollmentId,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature,
+            }),
+          });
+          resolve();
+        } catch (error) {
+          reject(error instanceof Error ? error : new Error("Payment verification failed."));
+        }
+      },
+      modal: {
+        ondismiss: function () {
+          reject(new Error("Payment popup closed before completing the transaction."));
+        },
+      },
+      theme: {
+        color: "#00f2ff",
+      },
+    };
+
+    const razorpay = new window.Razorpay(options);
+    razorpay.on("payment.failed", function (response) {
+      const message =
+        response?.error?.description ||
+        response?.error?.reason ||
+        "Razorpay payment failed. Please try again.";
+      reject(new Error(message));
+    });
+    razorpay.open();
+  });
+}
+
 if (menuToggle && navLinks) {
   menuToggle.addEventListener("click", () => {
     navLinks.classList.toggle("is-open");
@@ -254,16 +331,29 @@ if (enrollForm && paymentModal) {
 
       if (paymentModalTitle && paymentModalText) {
         paymentModalTitle.textContent = "Processing payment...";
-        paymentModalText.textContent = "Simulating secure payment confirmation.";
+        paymentModalText.textContent = "Creating secure Razorpay order...";
       }
 
-      await apiRequest("/api/payment/create-order", {
+      const amount = parseInt(priceDisplay.textContent.replace(/[^0-9]/g, ""), 10);
+      const order = await apiRequest("/api/payment/create-order", {
         method: "POST",
         body: JSON.stringify({
           enrollmentId,
-          amount: parseInt(priceDisplay.textContent.replace(/[^0-9]/g, "")),
+          amount,
         }),
       });
+
+      if (!order?.id) {
+        throw new Error("Order creation failed. Missing Razorpay order id.");
+      }
+
+      if (paymentModalTitle && paymentModalText) {
+        paymentModalTitle.textContent = "Opening Razorpay...";
+        paymentModalText.textContent = "Complete payment in the secure popup.";
+      }
+
+      await ensureRazorpayLoaded();
+      await openRazorpayCheckout({ order, enrollmentId, amount, name, email });
 
       if (paymentModalTitle && paymentModalText) {
         paymentModalTitle.textContent = "Payment Successful ✅";
