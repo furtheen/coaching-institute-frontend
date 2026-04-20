@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enroll - BitForge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="navbar container">
+        <a href="index.html" class="logo">BitForge</a>
+        <a href="index.html" class="btn btn-outline">Back to Home</a>
+      </nav>
+    </header>
+
+    <main class="section enroll-page">
+      <div class="container">
+        <div class="card enroll-card">
+          <h1>Enroll &amp; Payment</h1>
+          <p class="section-subtitle">
+            Complete your details and proceed with secure checkout.
+          </p>
+
+          <form class="enroll-form" id="enrollForm">
+            <label for="name">Your Name</label>
+            <input id="name" type="text" placeholder="Enter your full name" required />
+
+            <label for="email">Email Address</label>
+            <input id="email" type="email" placeholder="you@example.com" required />
+
+            <label for="course">Select Course</label>
+            <select id="course" required>
+              <option value="">Select Course</option>
+            </select>
+
+            <div class="payment-panel">
+              <p class="payment-title">Razorpay-style Secure Checkout</p>
+              <p class="payment-total">Total Amount: <strong id="priceDisplay">₹0</strong></p>
+              <div class="card payment-gateway">
+                <p><strong>Merchant:</strong> BitForge Coaching Institute</p>
+                <p><strong>Payment Method:</strong> UPI / Card / Netbanking</p>
+                <p><strong>Security:</strong> 256-bit encrypted transaction</p>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Proceed to Pay</button>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <div class="payment-modal" id="paymentModal" aria-hidden="true">
+      <div class="card payment-modal-card">
+        <h3 id="paymentModalTitle">Redirecting to secure payment...</h3>
+        <p id="paymentModalText">Please wait while we connect to the payment gateway.</p>
+      </div>
+    </div>
+
+    <script>
+      window.API_BASE_URL = "http://localhost:5032";
+    </script>
+    <script src="script.js"></script>
+  </body>
+</html>
