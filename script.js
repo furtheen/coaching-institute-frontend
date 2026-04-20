@@ -257,10 +257,11 @@ if (enrollForm && paymentModal) {
         paymentModalText.textContent = "Simulating secure payment confirmation.";
       }
 
-      await apiRequest("/api/payment", {
+      await apiRequest("/api/payment/create-order", {
         method: "POST",
         body: JSON.stringify({
           enrollmentId,
+          amount: priceDisplayValue
         }),
       });
 
